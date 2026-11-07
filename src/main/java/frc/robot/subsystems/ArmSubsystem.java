@@ -28,9 +28,11 @@ public class ArmSubsystem extends SubsystemBase {
 
     m_targetPos = targetPos();
   }
+  
 
+  
   private double targetPos() {
-    return -1 * (m_intakeAngleMotor.getPosition().getValueAsDouble() - initialPos) / (6.578128) * 360;
+    return -1 * (m_intakeAngleMotor.getPosition().getValueAsDouble() - getPos()) / (6.578128) * 360;
   }
 
   public double getPos() {
@@ -41,8 +43,8 @@ public class ArmSubsystem extends SubsystemBase {
     m_intakeAngleEncoder.setPosition(0);
   }
 
-  public double setTargetPos(double target, double m_targetPos) {
-      m_targetPos = target;
+  public double setTargetPos(double target) {
+    m_targetPos = target;
   }
 
   
@@ -50,7 +52,7 @@ public class ArmSubsystem extends SubsystemBase {
   public void periodic() {
 
   if (pidMode) {
-    fb = m_pidController.calculate(getPos(), )
+     double fb = m_pidController.calculate(getPos(), );
   }
     // This method will be called once per scheduler run
   }
