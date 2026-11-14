@@ -9,6 +9,7 @@ import com.ctre.phoenix6.configs.VoltageConfigs;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -22,13 +23,15 @@ public class ArmSubsystem extends SubsystemBase {
   VoltageConfigs m_VoltageConfigs;
   PIDController m_pidController = new PIDController(.02, 0.001, 0.001);
   Joystick m_leftJoystick;
+  Joystick m_rightJoystick;
  
-  public ArmSubsystem(Joystick leftJoystick) {
+  public ArmSubsystem(Joystick leftJoystick, Joystick rightJoystick) {
+    m_rightJoystick = rightJoystick;
     m_leftJoystick = leftJoystick;
    // m_intakeAngleEncoder = new TalonFX();
     m_intakeAngleMotor = new TalonFX(11);
     CurrentLimitsConfigs m_currentLimitConfigs = new CurrentLimitsConfigs()
-    .withStatorCurrentLimit(40)
+    .withStatorCurrentLimit(150)
     .withStatorCurrentLimitEnable(true)
     .withSupplyCurrentLimit(50)
     .withSupplyCurrentLimitEnable(true);
@@ -63,20 +66,41 @@ public class ArmSubsystem extends SubsystemBase {
     m_intakeAngleMotor.setVoltage(volts);
   }
   
+  public double convertThrottleToPosition(Joystick joystick){
+    // Positon = -30 * Throttle + 30
+    double position = -30*joystick.getThrottle()+30;
+    return position;
+  }
+
   @Override
   public void periodic() {
     SmartDashboard.putNumber("arm angle", getPosDegrees());
     SmartDashboard.putNumber("raw rotations", getPos());
     SmartDashboard.putNumber("arm angle temp", m_intakeAngleMotor.getDeviceTemp().getValueAsDouble());
-    SmartDashboard.putNumber("arm stator current", m_intakeAngleMotor.getStatorCurrent().getValueAsDouble());
-    SmartDashboard.putNumber("arm supply current", m_intakeAngleMotor.getSupplyCurrent().getValueAsDouble());
-    SmartDashboard.putNumber("arm motor voltage", m_intakeAngleMotor.getMotorVoltage().getValueAsDouble());
-    SmartDashboard.putNumber("left joystick throttle", m_leftJoystick.getThrottle());
+    SmartDashboard.putNumber("arm stator amps", m_intakeAngleMotor.getStatorCurrent().getValueAsDouble());
+    SmartDashboard.putNumber("arm supply amps", m_intakeAngleMotor.getSupplyCurrent().getValueAsDouble());
+    SmartDashboard.putNumber("arm motor volts", m_intakeAngleMotor.getMotorVoltage().getValueAsDouble());
+    SmartDashboard.putNumber("left throttle", m_leftJoystick.getThrottle());
+    // NetworkTableInstance default = NetworkTableInstance.getDefault();
+    //   default.getRoot().putBoolean("running", true);
+    //   default.getNested("arm").putDouble("arm angle", getPosDegrees());
+    //   default.getNested("motors").putDouble("motor2", 1200.0);
+    //   default.getNested("sensors").putDouble("odometryX", 5.2);
+    //   default.getNested("sensors").putDouble("odometryY", 3.1);
+
     
     if (pidMode) {
-      double ff = 2.6;
-      double fb = m_pidController.calculate(getPos(), m_targetPos );
-      setVolts(m_leftJoystick.getThrottle() * ff * Math.cos(getPosDegrees() / 180 * Math.PI));
+      double ff = -2.6;
+      m_targetPos = convertThrottleToPosition(m_rightJoystick);
+      double fb = m_pidController.calculate(getPosDegrees(), m_targetPos);
+      SmartDashboard.putNumber("right thottle", m_rightJoystick.getThrottle());
+      SmartDashboard.putNumber("target pos", m_targetPos);
+      SmartDashboard.putNumber("feedback", fb);
+      setVolts(
+        // m_leftJoystick.getThrottle() * 
+        ff * Math.cos(getPosDegrees() / 180 * Math.PI)
+        -fb*2
+      );
     }
     // This method will be called once per scheduler run
   }

@@ -27,7 +27,7 @@ public class RobotContainer {
   public static Joystick leftJoystick = new Joystick(0);
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
-  private final ArmSubsystem m_armSubsystem = new ArmSubsystem(leftJoystick);
+  private final ArmSubsystem m_armSubsystem = new ArmSubsystem(leftJoystick, rightJoystick);
   private final ArmCommand m_armCommand = new ArmCommand(m_armSubsystem);
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
